@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Raw data volumes (2.1 GB). Distributed as a GitHub Release asset instead:
+#   https://github.com/HUST-Yuan-Lab/SkinQuant/releases/tag/v1.0.0
+# Extract SkinQuant_Dataset.zip into the repository root to recreate Dataset/.
+# ---------------------------------------------------------------------------
+Dataset/
+*.tif
+*.tiff
+
+# MATLAB temporary / autosave files
+*.asv
+*.m~
+*.autosave
+slprj/
+
+# Generated results and scratch output
+tmp/
+*.mat
+
+# OS / editor
+Thumbs.db
+.DS_Store
+desktop.ini
