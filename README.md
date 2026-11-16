@@ -181,7 +181,3 @@ Note: Step 4 (cell angle) and Step 4b (cell morphology) read `_4d_select_cell_su
 ## Contact
 
 If you have any questions, please contact yuanj@hust.edu.cn for help.
-
-## License
-
-This software is internal research code and is not distributed under an open-source license. Please obtain permission from the authors before use or citation.
