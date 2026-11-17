@@ -6,7 +6,7 @@ Wei Ni, Ting Zhu
 
 ## Introduction
 
-This repository (SkinQuant) provides an automated quantitative analysis pipeline for skin fractional-laser micro-holes, thermal damage regions, and PI-positive nucleus-like objects based on fMOST three-dimensional fluorescence data. The inputs are ResUNet segmentation results (holes, damage regions, nucleus-like objects) and the raw grayscale volume data. The outputs are per-site (per data block/file) morphological parameters, angular distributions, and color-coded visualizations. The dataset, distributed separately as a GitHub Release asset (see [Dataset](#dataset)), covers three fractional-laser energies (25, 75, and 150 mJ), with two samples per energy.
+This repository (SkinQuant) provides an automated quantitative analysis pipeline for skin fractional-laser micro-holes, thermal damage regions, and PI-positive nucleus-like objects based on fMOST three-dimensional fluorescence data. The inputs are ResUNet segmentation results (holes, damage regions, nucleus-like objects) and the raw grayscale volume data. The outputs are per-site (per data block/file) morphological parameters, angular distributions, and color-coded visualizations. The bundled dataset covers three fractional-laser energies (25, 75, and 150 mJ), with two example volumes per energy.
 
 ## System requirements
 
@@ -16,13 +16,7 @@ The input data are multi-page TIFF stacks (8-bit grayscale in the bundled datase
 
 ## Dataset
 
-> **Note:** the raw volumes are **no longer stored in the Git repository**. The six multi-page TIFF stacks total 2.1 GB, which exceeds GitHub's per-file and repository size limits. They are now distributed as a single compressed archive attached to the [v1.0.0 release](https://github.com/HUST-Yuan-Lab/SkinQuant/releases/tag/v1.0.0):
->
-> **`SkinQuant_Dataset.zip`** — download from
-> <https://github.com/HUST-Yuan-Lab/SkinQuant/releases/download/v1.0.0/SkinQuant_Dataset.zip>
-> and extract it into the repository root so that the files land in `SkinQuant/Dataset/` (the archive already contains the `Dataset/` folder). The archive is about 1.0 GB compressed and restores the original 2.1 GB of TIFF data. The `Dataset/` folder is listed in `.gitignore`, so the extracted volumes will never be committed.
-
-The dataset contains six raw fMOST fluorescence volumes acquired at three fractional-laser energies, with two samples per energy:
+The bundled `Dataset/` folder contains six raw fMOST fluorescence volumes acquired at three fractional-laser energies, with two example volumes per energy. These volumes are a demonstration subset for exercising the workflow; they are not the complete 128-site dataset analysed in the article.
 
 - `25mJ_12.tif`: 1000 × 1000 pixels, 311 slices (153 MB)
 - `25mJ_33.tif`: 1000 × 1000 pixels, 289 slices (147 MB)
@@ -35,10 +29,9 @@ All files are 8-bit multi-page TIFF stacks, 2.1 GB in total. The file name follo
 
 ## Installation guide
 
-1. Download the repository (`git clone https://github.com/HUST-Yuan-Lab/SkinQuant.git` or the ZIP archive).
-2. Download `SkinQuant_Dataset.zip` from the [v1.0.0 release](https://github.com/HUST-Yuan-Lab/SkinQuant/releases/tag/v1.0.0) and extract it into the repository root. This creates `SkinQuant/Dataset/` with the six raw TIFF volumes. The dataset is not part of the Git history (see [Dataset](#dataset)).
-3. Set the `SkinQuant` folder as the current working directory and run `init` (this adds `utils/`, `analysis/`, `visualization/`, and `extraction/` to the search path).
-4. Edit `base_dir`, `datasets`, the parameters, and the `RUN_*` switches at the top of `main_workflow.m`, then run `main_workflow`.
+1. Download the repository.
+2. Set the `SkinQuant` folder as the current working directory and run `init` (this adds `utils/`, `analysis/`, `visualization/`, and `extraction/` to the search path).
+3. Edit `base_dir`, `datasets`, the parameters, and the `RUN_*` switches at the top of `main_workflow.m`, then run `main_workflow`.
 
 The directory structure is as follows:
 
@@ -46,8 +39,7 @@ The directory structure is as follows:
 SkinQuant/
 ├── init.m                     # Path initialization (adds subfolders to the search path)
 ├── main_workflow.m            # Main workflow entry (6 steps controlled by switches)
-├── Dataset/                   # Raw fMOST volumes (25mJ / 75mJ / 150mJ, two samples each)
-│   │                          # NOT in Git — extract SkinQuant_Dataset.zip from the Releases page
+├── Dataset/                   # Raw fMOST volumes (25mJ / 75mJ / 150mJ, two example volumes each)
 │   ├── 25mJ_12.tif
 │   ├── 25mJ_33.tif
 │   ├── 75mJ_27.tif
@@ -160,6 +152,8 @@ Note: Step 4 (cell angle) and Step 4b (cell morphology) read `_4d_select_cell_su
    - `all_datasets_angle_statistics.xlsx`: 3 worksheets named `AngleDistribution(ByComponent)`, `AngleDistribution(ByVoxel)`, and `SummaryStatistics`; the angle columns cover 0°–90° (91 columns)
    - `cell_morphology_results.xlsx`: one row per site with fields ObjectCount, TotalVolume, Density, VolumeFraction, MeanSphericity, StdSphericity, InjuryVolume, MeanAngle_deg, and WeightedMeanAngle_deg
 
+   All hole and injury-region parameters in `hole_quantity_results.xlsx` and `surface_pca_results.xlsx` are computed with the automatic depth-axis selection; see "Axis selection and operator-adjusted axes" below.
+
    `batch_hole_quantity` supports resuming from a checkpoint: it skips already processed rows using `dataset|filename` as the key, so re-runs will not miss files that share the same name in different datasets.
 
 5. **Algorithm definitions**
@@ -169,7 +163,7 @@ Note: Step 4 (cell angle) and Step 4b (cell morphology) read `_4d_select_cell_su
    - Micro-hole / damage region: among the three PCA axes, the one with the smallest angle to the ROI surface normal is taken as the depth axis, `θ = 90° − arccos(|MM·MS|) = arcsin(|MM·MS|)`; 0° means the axis is parallel to the surface and 90° means perpendicular.
    - Nucleus-like object: the first principal axis corresponding to the largest eigenvalue, `θ = arcsin(|MC·MS|)`; 0° means the main axis is parallel to the surface and 90° means perpendicular.
    - Both use the absolute value of the dot product with the normal, so the sign of the principal axis does not affect the angle.
-   - The first principal axis (largest eigenvalue) is deliberately not used for holes: the first principal axis of a shallow dish-shaped hole often lies in the surface plane and its projected length cannot represent depth, so the axis closest to the normal is used as the depth axis instead.
+   - The first principal axis (largest eigenvalue) is deliberately not used for holes: the first principal axis of a shallow dish-shaped hole often lies in the surface plane and its projected length cannot represent depth, so the axis closest to the normal is used as the depth axis instead. This is the default and the only axis-selection rule in the public batch code; see "Axis selection and operator-adjusted axes" below.
 
    Morphology definitions:
    - Volume = number of voxels × `prod(resolution)`
@@ -178,6 +172,22 @@ Note: Step 4 (cell angle) and Step 4b (cell morphology) read `_4d_select_cell_su
    - Sphericity = `(36πV²)^(1/3) / S`, where S is converted from the SurfaceArea returned by `regionprops3` using `(dx·dy·dz)^(2/3)`; the result is clipped to ≤1
    - Density = number of objects / damage-region volume; volume fraction = total object volume / damage-region volume
 
+## Axis selection and operator-adjusted axes
+
+The depth axis is selected automatically: among the three PCA axes of each micropore, the axis forming the smallest angle with the ROI-level surface normal is used. All batch functions (`batch_hole_quantity`, `batch_surface_pca`) therefore report the automatic result, and the public code contains no step that imports an operator-defined axis.
+
+For five 75 mJ/pixel sites reported in the accompanying article (sites 12, 14, 15, 21 and 26), the depth axis was replaced after three-dimensional review because the automatically selected axis did not follow the visible channel lumen. Each replaced axis is stored as two endpoints in the physical coordinate system of the corresponding data block (voxel index multiplied by the voxel resolution). The five axis records, the automatic and reported depth and angle values, and the script used to recompute the depth, cross-section and angle from these axes are available from the corresponding author upon reasonable request; they are not included in this repository.
+
+The final statistics in the article were computed from the corrected site-level workbook, whose `AxisSource(auto/manual)` field flags the five adjusted rows; all other 123 rows are automatic. The automatic values before adjustment were archived separately and are reproduced in Table S4(C) of the article; they cannot be derived from the final workbook. The `hole_quantity_results.xlsx` and `surface_pca_results.xlsx` files produced by this repository do not contain the `AxisSource` field, and they always contain the automatic values.
+
+Running the recalculation requires the corresponding hole-segmentation blocks and raw volumes, which are also available from the corresponding author upon reasonable request (see Data Availability in the article).
+
+Note: `skin_quantify.m` is a legacy single-file helper. It selects the depth axis relative to the Y axis, uses 45 sections, and reports `max_radius = MaxPerimeter/(2*pi)`; these definitions differ from the article. Use `batch_hole_quantity` or `batch_surface_pca` when the article's definitions are required.
+
 ## Contact
 
 If you have any questions, please contact yuanj@hust.edu.cn for help.
+
+## License
+
+This software is internal research code and is not distributed under an open-source license. Please obtain permission from the authors before use.
