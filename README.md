@@ -187,7 +187,3 @@ Note: `skin_quantify.m` is a legacy single-file helper. It selects the depth axi
 ## Contact
 
 If you have any questions, please contact yuanj@hust.edu.cn for help.
-
-## License
-
-This software is internal research code and is not distributed under an open-source license. Please obtain permission from the authors before use.
